@@ -5,6 +5,7 @@ import functools
 import logging
 import os
 import random
+import shutil
 import tempfile
 import unittest
 
@@ -39,6 +40,8 @@ class TestCanalPlus(unittest.TestCase):
         self.assertEqual(len(downloaded), 1)
         self.assertTrue(os.path.isfile(downloaded[0]))
         self.assertGreaterEqual(os.path.getsize(downloaded[0]), 0)
+    if shutil.which("true") is not None:
+      video.view("true")
 
   def test_getProgramList(self):
     """ Get program list, check expected programs and download a video. """

@@ -154,11 +154,14 @@ class CanalPlusVideo(CanalPlusApiObject):
     if self.stream_url is None:
       self.fetchVideoUrl()
     logger.info("Viewing in player '%s'..." % (player))
-    player_args = [player, self.stream_url]
+    player_cmd = (player, self.stream_url)
     if logger.isEnabledFor(logging.DEBUG):
-      subprocess.check_call(player_args)
+      subprocess.check_call(player_cmd)
     else:
-      subprocess.check_call(player_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+      subprocess.check_call(player_cmd,
+                            stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
 
   def fetchVideoUrl(self):
     """ Fetch video URL for the best quality available. """
