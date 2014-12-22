@@ -21,8 +21,8 @@ import xml.etree.ElementTree
 
 import requests
 
-import colored_logging
-import progress_display
+from . import colored_logging
+from . import progress_display
 
 
 USER_AGENT = "Mozilla/5.0"
