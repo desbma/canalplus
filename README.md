@@ -5,7 +5,7 @@ Canal+
 [![Statut des tests](https://img.shields.io/travis/desbma/canalplus/master.svg?label=tests&style=flat)](https://travis-ci.org/desbma/canalplus)
 [![Couverture](https://img.shields.io/coveralls/desbma/canalplus/master.svg?style=flat)](https://coveralls.io/r/desbma/canalplus?branch=master)
 [![Version de Python supportées](https://pypip.in/py_versions/canalplus/badge.svg?style=flat)](https://pypi.python.org/pypi/canalplus/)
-[![License](https://pypip.in/license/canalplus/badge.svg?style=flat)](https://pypi.python.org/pypi/canalplus/)
+[![Licence](https://pypip.in/license/canalplus/badge.svg?style=flat)](https://pypi.python.org/pypi/canalplus/)
 
 Canal+ est un script Python permettant de parcourir/visionner/télécharger les vidéos mises en ligne par la chaine Canal+ (Guignols de l'info, Groland, etc.).
 
@@ -60,6 +60,6 @@ Exécuter `canalplus -h` pour obtenir une liste complète des options disponible
     `canalplus -p 'Dernieres Bandes Annonces' -m auto ~/Bureau`
 
 
-## License
+## Licence
 
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
