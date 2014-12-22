@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import functools
 import logging
+import os
 import random
+import tempfile
 import unittest
 
 import requests
@@ -12,7 +15,7 @@ import canalplus
 
 class TestCanalPlus(unittest.TestCase):
 
-  def checkIsVideo(self, video):
+  def checkIsVideo(self, video, *, download=True):
     self.assertIsInstance(video, canalplus.CanalPlusVideo)
     self.assertIsInstance(video.title, str)
     self.assertTrue(video.title)
@@ -28,9 +31,17 @@ class TestCanalPlus(unittest.TestCase):
           media_streams = tuple(canalplus.CanalPlusVideo.parseM3U(m3u_data))
           # each ts file is 10s long, assume no video is shorter than 30s
           self.assertGreaterEqual(len(media_streams), 3)
+    if download:
+      with tempfile.TemporaryDirectory() as temp_dir_path:
+        video.download(temp_dir_path)
+        downloaded = tuple(map(functools.partial(os.path.join, temp_dir_path),
+                               os.listdir(temp_dir_path)))
+        self.assertEqual(len(downloaded), 1)
+        self.assertTrue(os.path.isfile(downloaded[0]))
+        self.assertGreaterEqual(os.path.getsize(downloaded[0]), 0)
 
   def test_getProgramList(self):
-    """ Get program list and check expected programs. """
+    """ Get program list, check expected programs and download a video. """
     programs = canalplus.CanalPlusProgramList()
     self.assertGreaterEqual(len(programs), 40)
     for program in programs:
@@ -44,7 +55,7 @@ class TestCanalPlus(unittest.TestCase):
       for program in programs:
         for video in program:
           video.fetchVideoUrl()
-          self.checkIsVideo(video)
+          self.checkIsVideo(video, download=False)
     else:
       program = random.choice(tuple(programs))
       video = random.choice(tuple(program))
@@ -52,7 +63,7 @@ class TestCanalPlus(unittest.TestCase):
       self.checkIsVideo(video)
 
   def test_search(self):
-    """ Search for a program. """
+    """ Search for a program, and download a search result. """
     videos = canalplus.CanalPlusSearch("les guignols")
     videos = tuple(videos)
     self.assertGreaterEqual(len(videos), 40)
