@@ -60,7 +60,10 @@ class TestCanalPlus(unittest.TestCase):
           video.fetchVideoUrl()
           self.checkIsVideo(video, download=False)
     else:
-      program = random.choice(tuple(programs))
+      programs = tuple(programs)
+      program = None
+      while not program:
+        program = random.choice(programs)
       video = random.choice(tuple(program))
       video.fetchVideoUrl()
       self.checkIsVideo(video)

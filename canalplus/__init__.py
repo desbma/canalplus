@@ -467,7 +467,7 @@ def cl_main():
       else:
         vid.download(args.output)
     elif isinstance(program, CanalPlusProgram):
-      logger.error("No videos for program '%s'" % (args.program))
+      logger.error("No videos for program '%s'" % (program.title))
       exit(1)
     else:
       logger.error("No videos for search '%s'" % (args.program[1:]))
