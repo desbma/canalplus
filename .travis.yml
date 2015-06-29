@@ -9,3 +9,16 @@ script:
   - "coverage run --source=canalplus setup.py test"
 after_success:
   - "coveralls"
+deploy:
+  provider: pypi
+  user: desbma
+  password:
+    secure: "pW6UkXiD854dL85dy6ShF8qKuWwsVEJ1t/1mUJGCiIETSwtWotMvJqkoWLic4wynNRQysszPIAx/I9yvLCKONCfVjlS6ZqTppUxg8yOWEKIL8JjBFgy2TmRWjOPojlgRyMXusAUNRo/EeKOmty6+UTHcqQMrdw+xFQ5AiC7JMrk="
+  on:
+    tags: true
+notifications:
+  email:
+    recipients:
+      - secure: "KZqxyNrleLKvmjbTQF7Mrcqu/4w37KWW+Vk6cepXtH7e0iUqf2YacaS8hdVEC1w6k7+MWsLpdLz+fgZ/CGRDLFXe+1zFPZ1F82k9SIXfY51ncunaqUevbNOQmahPOPAbtq+/vLIzhYuY1V3DcgXTHnJ+Hv5rmIb4cmsH9s0krXQ="
+    on_success: always
+    on_failure: always
