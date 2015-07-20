@@ -101,10 +101,10 @@ class CanalPlusVideo(CanalPlusApiObject):
                   progress.updateProgress((i * 100 / len(ts_urls)) +
                                           downloaded_bytes * (100 / len(ts_urls)) / total_size)
                   progress.setAdditionnalInfo("%s / %s (ts file %u/%u)" %
-                                               (format_byte_size_str(downloaded_bytes),
-                                                format_byte_size_str(total_size),
-                                                i + 1,
-                                                len(ts_urls)))
+                                              (format_byte_size_str(downloaded_bytes),
+                                               format_byte_size_str(total_size),
+                                               i + 1,
+                                               len(ts_urls)))
                   progress.display()
                 ts_file.write(chunk)
             ts_filepaths.append(ts_filepath)
@@ -135,10 +135,10 @@ class CanalPlusVideo(CanalPlusApiObject):
               progress.updateProgress((i * 100 / len(ts_urls)) +
                                       downloaded_bytes * (100 / len(ts_urls)) / total_size)
               progress.setAdditionnalInfo("%s / %s (ts file %u/%u)" %
-                                           (format_byte_size_str(downloaded_bytes),
-                                            format_byte_size_str(total_size),
-                                            i + 1,
-                                            len(ts_urls)))
+                                          (format_byte_size_str(downloaded_bytes),
+                                           format_byte_size_str(total_size),
+                                           i + 1,
+                                           len(ts_urls)))
               progress.display()
             video_file.write(chunk)
           if show_progressbar:
