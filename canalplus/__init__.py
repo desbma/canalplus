@@ -40,6 +40,8 @@ def format_byte_size_str(size):
 
 class CanalPlusApiObject:
 
+  """ Base class for Canal+ API objects. """
+
   BASE_URL = "http://service.canal-plus.com/video/rest"
 
   def fetchXml(self, action, parameter=""):
@@ -57,6 +59,8 @@ class CanalPlusApiObject:
 
 
 class CanalPlusVideo(CanalPlusApiObject):
+
+  """ Canal+ video API object. """
 
   def __init__(self, id, title):
     self.id = id
@@ -217,6 +221,8 @@ class CanalPlusVideo(CanalPlusApiObject):
 
 class CanalPlusProgram(CanalPlusApiObject):
 
+  """ Canal+ program (iterable of CanalPlusVideo) API object. """
+
   def __init__(self, id, title):
     self.id = id
     self.title = title
@@ -271,6 +277,8 @@ class CanalPlusProgram(CanalPlusApiObject):
 
 class CanalPlusSearch(CanalPlusApiObject):
 
+  """ Canal+ search result (iterable of CanalPlusVideo) API object. """
+
   def __init__(self, query):
     self.query = query
     self.fetchVidlist()
@@ -315,6 +323,8 @@ class CanalPlusSearch(CanalPlusApiObject):
 
 
 class CanalPlusProgramList(CanalPlusApiObject):
+
+  """ Canal+ program list (iterable of CanalPlusProgram) API object. """
 
   def __init__(self):
     # get program list
