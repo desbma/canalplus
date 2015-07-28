@@ -10,6 +10,7 @@ import argparse
 import itertools
 import logging
 import os
+import signal
 import shutil
 import subprocess
 import string
@@ -259,7 +260,7 @@ class CanalPlusProgram(CanalPlusApiObject):
     """ Return the number of videos in the program. """
     if self.xml_vidlist is None:
       self.fetchVidlist()
-    return len(self.xml_vidlist.iterfind("MEA"))
+    return len(self.xml_vidlist.findall("MEA"))
 
   def fetchVidlist(self):
     """ Fetch program video list. """
@@ -359,6 +360,20 @@ class CanalPlusProgramList(CanalPlusApiObject):
       return next(itertools.islice(self, key, key + 1))
 
 
+def terminal_choice(items, autocap=False):
+  for i, item in enumerate(items, 1):
+    print("% 3u. %s" % (i, string.capwords(item.title) if autocap else item.title))
+  c = 0
+  while c not in range(1, len(items) + 1):
+    try:
+      c = int(input("? "))
+    except ValueError:
+      continue
+    except KeyboardInterrupt:
+      exit(128 + signal.SIGINT)
+  return c
+
+
 def cl_main():
   # parse args
   arg_parser = argparse.ArgumentParser(description=__doc__,
@@ -403,16 +418,7 @@ def cl_main():
   if args.program is None:
     # interactive program selection mode
     programs = CanalPlusProgramList()
-    for i, program in enumerate(programs, 1):
-      print("% 3u. %s" % (i, string.capwords(program.title)))
-    c = 0
-    while c not in range(1, i + 1):
-      try:
-        c = int(input("? "))
-      except ValueError:
-        continue
-      except KeyboardInterrupt:
-        exit(130)
+    c = terminal_choice(programs, True)
     program = programs[c - 1]
   elif args.program.startswith("?"):
     # program search mode
@@ -449,28 +455,18 @@ def cl_main():
       vid.download(args.output)
   else:
     # interactive mode
-    for i, vid in enumerate(program, 1):
-      print("% 3u. %s" % (i, vid.title))
-    if program:
-      c = 0
-      while c not in range(1, i + 1):
-        try:
-          c = int(input("? "))
-        except ValueError:
-          continue
-        except KeyboardInterrupt:
-          exit(130)
-      vid = program[c - 1]
-      if args.output.startswith("player:"):
-        vid.view(args.output.split(":", 1)[1])
+    if not program:
+      if isinstance(program, CanalPlusProgram):
+        logger.error("No videos for program '%s'" % (program.title))
       else:
-        vid.download(args.output)
-    elif isinstance(program, CanalPlusProgram):
-      logger.error("No videos for program '%s'" % (program.title))
+        logger.error("No videos for search '%s'" % (args.program[1:]))
       exit(1)
+    c = terminal_choice(program)
+    vid = program[c - 1]
+    if args.output.startswith("player:"):
+      vid.view(args.output.split(":", 1)[1])
     else:
-      logger.error("No videos for search '%s'" % (args.program[1:]))
-      exit(1)
+      vid.download(args.output)
 
 
 if __name__ == "__main__":
