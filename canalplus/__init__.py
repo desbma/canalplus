@@ -26,6 +26,7 @@ from canalplus import progress_display
 
 
 USER_AGENT = "Mozilla/5.0"
+HTTP_TIMEOUT=9.1
 
 
 def format_byte_size_str(size):
@@ -53,7 +54,9 @@ class CanalPlusApiObject:
   def fetchText(self, url):
     """ Fetch text from an URL. """
     logging.getLogger().debug("Fetching '%s'..." % (url))
-    response = requests.get(url, headers={"User-Agent": USER_AGENT})
+    response = requests.get(url,
+                            headers={"User-Agent": USER_AGENT},
+                            timeout=HTTP_TIMEOUT)
     response.raise_for_status()
     return response.content.decode("utf-8")
 
@@ -96,7 +99,8 @@ class CanalPlusVideo(CanalPlusApiObject):
             with open(ts_filepath, "wb") as ts_file:
               response = requests.get(ts_url,
                                       stream=True,
-                                      headers={"User-Agent": USER_AGENT})
+                                      headers={"User-Agent": USER_AGENT},
+                                      timeout=HTTP_TIMEOUT)
               response.raise_for_status()
               total_size = int(response.headers["Content-Length"])
               for chunk in response.iter_content(2 ** 12):
@@ -130,7 +134,8 @@ class CanalPlusVideo(CanalPlusApiObject):
         with open(video_filepath, "wb") as video_file:
           response = requests.get(self.stream_url,
                                   stream=True,
-                                  headers={"User-Agent": USER_AGENT})
+                                  headers={"User-Agent": USER_AGENT},
+                                  timeout=HTTP_TIMEOUT)
           response.raise_for_status()
           total_size = int(response.headers["Content-Length"])
           for chunk in response.iter_content(2 ** 12):
