@@ -150,12 +150,9 @@ class CanalPlusVideo(CanalPlusApiObject):
           for chunk in response.iter_content(2 ** 12):
             if show_progressbar:
               downloaded_bytes = video_file.tell()
-              progress.updateProgress((i * 100 / len(ts_urls)) +
-                                      downloaded_bytes * (100 / len(ts_urls)) / total_size)
-              progress.setAdditionnalInfo("TS file %u/%u: %s / %s" %
-                                          (i + 1,
-                                           len(ts_urls),
-                                           format_byte_size_str(downloaded_bytes),
+              progress.updateProgress(downloaded_bytes * 100 / total_size)
+              progress.setAdditionnalInfo("%s / %s" %
+                                          (format_byte_size_str(downloaded_bytes),
                                            format_byte_size_str(total_size)))
               progress.display()
             video_file.write(chunk)
