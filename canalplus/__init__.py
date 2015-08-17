@@ -12,11 +12,9 @@ import itertools
 import logging
 import os
 import signal
-import shutil
 import subprocess
 import string
 import sys
-import tempfile
 import urllib.parse
 import xml.etree.ElementTree
 
@@ -99,41 +97,34 @@ class CanalPlusVideo(CanalPlusApiObject):
         logging.getLogger().info("Downloading TS files...")
         if show_progressbar:
           progress = progress_display.ProgressBar()
-        with tempfile.TemporaryDirectory() as temp_dir_path:
-          ts_filepaths = []
+        with open(video_filepath, "wb") as video_file:
           for i, ts_url in enumerate(ts_urls):
-            ts_filepath = os.path.join(temp_dir_path, "%03u.ts" % (i + 1))
-            with open(ts_filepath, "wb") as ts_file, \
-                    contextlib.closing(self.getHttpSession().get(ts_url,
-                                                                 stream=True,
-                                                                 headers={"User-Agent":
-                                                                          USER_AGENT},
-                                                                 timeout=HTTP_TIMEOUT)) as response:
+            previous_size = video_file.tell()
+            with contextlib.closing(self.getHttpSession().get(ts_url,
+                                                              stream=True,
+                                                              headers={"User-Agent":
+                                                                       USER_AGENT},
+                                                              timeout=HTTP_TIMEOUT)) as response:
               response.raise_for_status()
-              total_size = int(response.headers["Content-Length"])
+              ts_size = int(response.headers["Content-Length"])
               for chunk in response.iter_content(2 ** 12):
                 if show_progressbar:
-                  downloaded_bytes = ts_file.tell()
+                  total_dl_bytes = video_file.tell()
+                  ts_dl_bytes = total_dl_bytes - previous_size
                   progress.updateProgress((i * 100 / len(ts_urls)) +
-                                          downloaded_bytes * (100 / len(ts_urls)) / total_size)
-                  progress.setAdditionnalInfo("TS file %u/%u: %s / %s" %
-                                              (i + 1,
+                                          ts_dl_bytes * (100 / len(ts_urls)) / ts_size)
+                  progress.setAdditionnalInfo("TS file %s/%u: %s / %s, total %s" %
+                                              (str(i + 1).rjust(len(str(len(ts_urls)))),
                                                len(ts_urls),
-                                               format_byte_size_str(downloaded_bytes),
-                                               format_byte_size_str(total_size)))
+                                               format_byte_size_str(ts_dl_bytes).rjust(6),
+                                               format_byte_size_str(ts_size).rjust(6),
+                                               format_byte_size_str(total_dl_bytes).rjust(7)))
                   progress.display()
-                ts_file.write(chunk)
-            ts_filepaths.append(ts_filepath)
+                video_file.write(chunk)
           if show_progressbar:
             progress.updateProgress(100)
             progress.display()
             progress.end()
-          # concat files
-          logging.getLogger().info("Concatenating TS files to '%s'..." % (video_filepath))
-          with open(video_filepath, "wb") as video_file:
-            for ts_filepath in ts_filepaths:
-              with open(ts_filepath, "rb") as ts_file:
-                shutil.copyfileobj(ts_file, video_file)
 
       else:  # direct stream download
         logging.getLogger().info("Downloading video to '%s'..." % (video_filepath))
@@ -152,7 +143,7 @@ class CanalPlusVideo(CanalPlusApiObject):
               downloaded_bytes = video_file.tell()
               progress.updateProgress(downloaded_bytes * 100 / total_size)
               progress.setAdditionnalInfo("%s / %s" %
-                                          (format_byte_size_str(downloaded_bytes),
+                                          (format_byte_size_str(downloaded_bytes).rjust(7),
                                            format_byte_size_str(total_size)))
               progress.display()
             video_file.write(chunk)
