@@ -45,6 +45,11 @@ class CanalPlusApiObject:
 
   BASE_URL = "http://service.canal-plus.com/video/rest"
 
+  session = requests.Session()
+
+  def getHttpSession(self):
+    return __class__.session
+
   def fetchXml(self, action, parameter=""):
     """ Fetch XML data from an URL and return a xml.etree.ElementTree object. """
     url = "%s/%s/cplus/%s" % (self.BASE_URL, action, parameter)
@@ -54,9 +59,10 @@ class CanalPlusApiObject:
   def fetchText(self, url):
     """ Fetch text from an URL. """
     logging.getLogger().debug("Fetching '%s'..." % (url))
-    response = requests.get(url,
-                            headers={"User-Agent": USER_AGENT},
-                            timeout=HTTP_TIMEOUT)
+    response = self.getHttpSession().get(url,
+                                         headers={"User-Agent":
+                                                  USER_AGENT},
+                                         timeout=HTTP_TIMEOUT)
     response.raise_for_status()
     return response.content.decode("utf-8")
 
@@ -97,10 +103,11 @@ class CanalPlusVideo(CanalPlusApiObject):
           for i, ts_url in enumerate(ts_urls):
             ts_filepath = os.path.join(temp_dir_path, "%03u.ts" % (i + 1))
             with open(ts_filepath, "wb") as ts_file:
-              response = requests.get(ts_url,
-                                      stream=True,
-                                      headers={"User-Agent": USER_AGENT},
-                                      timeout=HTTP_TIMEOUT)
+              response = self.getHttpSession().get(ts_url,
+                                                   stream=True,
+                                                   headers={"User-Agent":
+                                                            USER_AGENT},
+                                                   timeout=HTTP_TIMEOUT)
               response.raise_for_status()
               total_size = int(response.headers["Content-Length"])
               for chunk in response.iter_content(2 ** 12):
@@ -132,10 +139,11 @@ class CanalPlusVideo(CanalPlusApiObject):
         if show_progressbar:
           progress = progress_display.ProgressBar()
         with open(video_filepath, "wb") as video_file:
-          response = requests.get(self.stream_url,
-                                  stream=True,
-                                  headers={"User-Agent": USER_AGENT},
-                                  timeout=HTTP_TIMEOUT)
+          response = self.getHttpSession().get(self.stream_url,
+                                               stream=True,
+                                               headers={"User-Agent":
+                                                        USER_AGENT},
+                                               timeout=HTTP_TIMEOUT)
           response.raise_for_status()
           total_size = int(response.headers["Content-Length"])
           for chunk in response.iter_content(2 ** 12):
