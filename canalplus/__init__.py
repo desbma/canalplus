@@ -27,7 +27,7 @@ from canalplus import progress_display
 
 
 USER_AGENT = "Mozilla/5.0"
-HTTP_TIMEOUT=9.1
+HTTP_TIMEOUT = 9.1
 
 
 def format_byte_size_str(size):
