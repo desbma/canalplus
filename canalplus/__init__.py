@@ -7,6 +7,7 @@ __author__ = "desbma"
 __license__ = "GPLv3"
 
 import argparse
+import contextlib
 import itertools
 import logging
 import os
@@ -102,12 +103,12 @@ class CanalPlusVideo(CanalPlusApiObject):
           ts_filepaths = []
           for i, ts_url in enumerate(ts_urls):
             ts_filepath = os.path.join(temp_dir_path, "%03u.ts" % (i + 1))
-            with open(ts_filepath, "wb") as ts_file:
-              response = self.getHttpSession().get(ts_url,
-                                                   stream=True,
-                                                   headers={"User-Agent":
-                                                            USER_AGENT},
-                                                   timeout=HTTP_TIMEOUT)
+            with open(ts_filepath, "wb") as ts_file, \
+                    contextlib.closing(self.getHttpSession().get(ts_url,
+                                                                 stream=True,
+                                                                 headers={"User-Agent":
+                                                                          USER_AGENT},
+                                                                 timeout=HTTP_TIMEOUT)) as response:
               response.raise_for_status()
               total_size = int(response.headers["Content-Length"])
               for chunk in response.iter_content(2 ** 12):
@@ -138,12 +139,12 @@ class CanalPlusVideo(CanalPlusApiObject):
         logging.getLogger().info("Downloading video to '%s'..." % (video_filepath))
         if show_progressbar:
           progress = progress_display.ProgressBar()
-        with open(video_filepath, "wb") as video_file:
-          response = self.getHttpSession().get(self.stream_url,
-                                               stream=True,
-                                               headers={"User-Agent":
-                                                        USER_AGENT},
-                                               timeout=HTTP_TIMEOUT)
+        with open(video_filepath, "wb") as video_file, \
+                contextlib.closing(self.getHttpSession().get(self.stream_url,
+                                                             stream=True,
+                                                             headers={"User-Agent":
+                                                                      USER_AGENT},
+                                                             timeout=HTTP_TIMEOUT)) as response:
           response.raise_for_status()
           total_size = int(response.headers["Content-Length"])
           for chunk in response.iter_content(2 ** 12):
