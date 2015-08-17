@@ -11,6 +11,7 @@ import contextlib
 import itertools
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import string
@@ -81,9 +82,9 @@ class CanalPlusVideo(CanalPlusApiObject):
     if self.stream_url is None:
       self.fetchVideoUrl()
     # sanitize output filename
-    video_filepath = "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + "."))
-    if os.path.isdir(dir):
-      video_filepath = os.path.join(dir, video_filepath)
+    video_filepath = os.path.join(dir,
+                                  "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + ".")))
+    video_tmp_filepath = "%s.tmp" % (video_filepath)
     # download
     if not os.path.isfile(video_filepath):
       show_progressbar = sys.stdout.isatty() and logging.getLogger().isEnabledFor(logging.INFO)
@@ -97,7 +98,7 @@ class CanalPlusVideo(CanalPlusApiObject):
         logging.getLogger().info("Downloading TS files...")
         if show_progressbar:
           progress = progress_display.ProgressBar()
-        with open(video_filepath, "wb") as video_file:
+        with open(video_tmp_filepath, "wb") as video_file:
           for i, ts_url in enumerate(ts_urls):
             previous_size = video_file.tell()
             with contextlib.closing(self.getHttpSession().get(ts_url,
@@ -121,16 +122,12 @@ class CanalPlusVideo(CanalPlusApiObject):
                                                format_byte_size_str(total_dl_bytes).rjust(7)))
                   progress.display()
                 video_file.write(chunk)
-          if show_progressbar:
-            progress.updateProgress(100)
-            progress.display()
-            progress.end()
 
       else:  # direct stream download
         logging.getLogger().info("Downloading video to '%s'..." % (video_filepath))
         if show_progressbar:
           progress = progress_display.ProgressBar()
-        with open(video_filepath, "wb") as video_file, \
+        with open(video_tmp_filepath, "wb") as video_file, \
                 contextlib.closing(self.getHttpSession().get(self.stream_url,
                                                              stream=True,
                                                              headers={"User-Agent":
@@ -147,10 +144,14 @@ class CanalPlusVideo(CanalPlusApiObject):
                                            format_byte_size_str(total_size)))
               progress.display()
             video_file.write(chunk)
-          if show_progressbar:
-            progress.updateProgress(100)
-            progress.display()
-            progress.end()
+
+      # finalize
+      shutil.move(video_tmp_filepath, video_filepath)
+      if show_progressbar:
+        progress.updateProgress(100)
+        progress.display()
+        progress.end()
+
     else:
       logger.info("File '%s' already exists, skipping download" % (video_filepath))
 
