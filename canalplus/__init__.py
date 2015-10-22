@@ -316,7 +316,7 @@ class CanalPlusSearch(CanalPlusApiObject):
 
   def __len__(self):
     """ Return the number of search results. """
-    return len(self.xml_vidlist.iterfind("VIDEO"))
+    return len(self.xml_vidlist.findall("VIDEO"))
 
   def fetchVidlist(self):
     """ Fetch search results list. """
