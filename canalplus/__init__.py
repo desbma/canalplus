@@ -448,7 +448,10 @@ def cl_main():
   # choose vid(s) to download
   if args.mode == "auto":
     # auto mode
-    logger.info("[Automatic mode] Getting all videos of program '%s'" % (program.title))
+    if isinstance(program, CanalPlusProgram):
+      logger.info("[Automatic mode] Getting all videos of program '%s'" % (program.title))
+    else:
+      logger.info("[Automatic mode] Getting all videos for query '%s'" % (program.query))
     for i, vid in enumerate(program, 1):
       logger.info("[Automatic mode] Getting video %u/%u : '%s'" % (i, len(program), vid.title))
       if args.output.startswith("player:"):
