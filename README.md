@@ -23,7 +23,7 @@ Canal+ est un script Python permettant de parcourir/visionner/télécharger les 
 
 ## Installation
 
-**[Python](https://www.python.org/downloads/) >= 3.3 requis.**
+[Python](https://www.python.org/downloads/) >= 3.3 requis.
 
 ### A partir de PyPI (avec PIP)
 
