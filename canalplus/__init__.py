@@ -145,12 +145,44 @@ class CanalPlusVideo(CanalPlusApiObject):
               progress.display()
             video_file.write(chunk)
 
-      # finalize
-      shutil.move(video_tmp_filepath, video_filepath)
       if show_progressbar:
         progress.updateProgress(100)
         progress.display()
         progress.end()
+
+      ffmpeg_path = shutil.which("ffmpeg")
+      avconv_path = shutil.which("avconv")
+      remuxed = False
+      if ffmpeg_path is not None or avconv_path is not None:
+        # remux to mp4 (better seeking than mpegts)
+        # FIXME extension change breaks auto download
+        converter = os.path.basename(next(filter(None, (ffmpeg_path, avconv_path))))
+        video_filepath_mp4 = "%s.mp4" % (os.path.splitext(video_filepath)[0])
+        logging.getLogger().info("Remuxing to '%s' with %s..." % (video_filepath_mp4, converter))
+        for attempt in range(2):
+          cmd = [converter]
+          if not logger.isEnabledFor(logging.DEBUG):
+            cmd.extend(("-loglevel", "quiet"))
+          cmd.extend(("-i", video_tmp_filepath, "-c", "copy"))
+          if attempt == 1:
+            cmd.extend(("-bsf:a", "aac_adtstoasc"))
+          cmd.append(video_filepath_mp4)
+          try:
+            subprocess.check_call(cmd)
+          except subprocess.CalledProcessError:
+            try:
+              os.remove(video_filepath_mp4)
+            except FileNotFoundError:
+              pass
+            continue
+          remuxed = True
+          os.remove(video_tmp_filepath)
+          break
+        if not remuxed:
+          logging.getLogger().warning("Remuxing failed")
+
+      if not remuxed:
+        shutil.move(video_tmp_filepath, video_filepath)
 
     else:
       logger.info("File '%s' already exists, skipping download" % (video_filepath))
