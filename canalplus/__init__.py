@@ -83,7 +83,7 @@ class CanalPlusVideo(CanalPlusApiObject):
 
     # sanitize output filename
     video_filepath_ts = os.path.join(dir,
-                                  "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + ".")))
+                                     "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + ".")))
     video_filepath_mp4 = "%s.mp4" % (os.path.splitext(video_filepath_ts)[0])
     video_filepath_tmp = "%s.tmp" % (video_filepath_ts)
 
