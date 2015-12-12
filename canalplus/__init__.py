@@ -22,6 +22,7 @@ import xml.etree.ElementTree
 import requests
 
 from canalplus import colored_logging
+from canalplus import mkstemp_ctx
 from canalplus import progress_display
 
 
@@ -85,40 +86,40 @@ class CanalPlusVideo(CanalPlusApiObject):
     video_filepath_ts = os.path.join(dir,
                                      "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + ".")))
     video_filepath_mp4 = "%s.mp4" % (os.path.splitext(video_filepath_ts)[0])
-    video_filepath_tmp = "%s.tmp" % (video_filepath_ts)
 
     if os.path.isfile(video_filepath_ts) or os.path.isfile(video_filepath_mp4):
       logging.getLogger().info("File already exists, skipping download")
       return
 
-    # download
-    if sys.stdout.isatty() and logging.getLogger().isEnabledFor(logging.INFO):
-      progress = progress_display.ProgressBar()
-    else:
-      progress = None
-    if self.stream_url.endswith(".m3u8"):
-      # fetch m3u8 playlist
-      m3u8_data = self.fetchText(self.stream_url)
-      # parse it
-      ts_urls = tuple(filter(lambda x: not x.startswith("#"),
-                             m3u8_data.splitlines()))
-      # download ts files
-      self.download_ts(ts_urls, video_filepath_tmp, progress)
+    with mkstemp_ctx.mkstemp(suffix=".ts") as video_filepath_tmp:
+      # download
+      if sys.stdout.isatty() and logging.getLogger().isEnabledFor(logging.INFO):
+        progress = progress_display.ProgressBar()
+      else:
+        progress = None
+      if self.stream_url.endswith(".m3u8"):
+        # fetch m3u8 playlist
+        m3u8_data = self.fetchText(self.stream_url)
+        # parse it
+        ts_urls = tuple(filter(lambda x: not x.startswith("#"),
+                               m3u8_data.splitlines()))
+        # download ts files
+        self.download_ts(ts_urls, video_filepath_tmp, progress)
 
-    else:
-      # direct stream download
-      logging.getLogger().info("Downloading video to '%s'..." % (video_filepath_ts))
-      self.download_ts((self.stream_url,), video_filepath_tmp, progress)
+      else:
+        # direct stream download
+        logging.getLogger().info("Downloading video to '%s'..." % (video_filepath_ts))
+        self.download_ts((self.stream_url,), video_filepath_tmp, progress)
 
-    if progress is not None:
-      progress.updateProgress(100)
-      progress.display()
-      progress.end()
+      if progress is not None:
+        progress.updateProgress(100)
+        progress.display()
+        progress.end()
 
-    # try to remux to mp4
-    remuxed = self.remuxToMp4(video_filepath_tmp, video_filepath_mp4)
-    if not remuxed:
-      shutil.move(video_filepath_tmp, video_filepath_ts)
+      # try to remux to mp4
+      remuxed = self.remuxToMp4(video_filepath_tmp, video_filepath_mp4)
+      if not remuxed:
+        shutil.move(video_filepath_tmp, video_filepath_ts)
 
   def download_ts(self, urls, filepath, progress):
     """ Download one or several MPEG-TS videos to a file. """
