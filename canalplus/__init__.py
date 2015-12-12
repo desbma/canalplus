@@ -78,114 +78,107 @@ class CanalPlusVideo(CanalPlusApiObject):
 
   def download(self, dir):
     """ Download a video to a given directory. """
-    logger = logging.getLogger()
     if self.stream_url is None:
       self.fetchVideoUrl()
-    # sanitize output filename
-    video_filepath = os.path.join(dir,
-                                  "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + ".")))
-    video_tmp_filepath = "%s.tmp" % (video_filepath)
-    # download
-    if not os.path.isfile(video_filepath):
-      show_progressbar = sys.stdout.isatty() and logging.getLogger().isEnabledFor(logging.INFO)
-      if self.stream_url.endswith(".m3u8"):
-        # fetch m3u8 playlist
-        m3u8_data = self.fetchText(self.stream_url)
-        # parse it
-        ts_urls = tuple(filter(lambda x: not x.startswith("#"),
-                               m3u8_data.splitlines()))
-        # download ts files
-        logging.getLogger().info("Downloading TS files...")
-        if show_progressbar:
-          progress = progress_display.ProgressBar()
-        with open(video_tmp_filepath, "wb") as video_file:
-          for i, ts_url in enumerate(ts_urls):
-            previous_size = video_file.tell()
-            with contextlib.closing(self.getHttpSession().get(ts_url,
-                                                              stream=True,
-                                                              headers={"User-Agent":
-                                                                       USER_AGENT},
-                                                              timeout=HTTP_TIMEOUT)) as response:
-              response.raise_for_status()
-              ts_size = int(response.headers["Content-Length"])
-              for chunk in response.iter_content(2 ** 12):
-                if show_progressbar:
-                  total_dl_bytes = video_file.tell()
-                  ts_dl_bytes = total_dl_bytes - previous_size
-                  progress.updateProgress((i * 100 / len(ts_urls)) +
-                                          ts_dl_bytes * (100 / len(ts_urls)) / ts_size)
-                  progress.setAdditionnalInfo("TS file %s/%u: %s / %s, total %s" %
-                                              (str(i + 1).rjust(len(str(len(ts_urls)))),
-                                               len(ts_urls),
-                                               format_byte_size_str(ts_dl_bytes).rjust(6),
-                                               format_byte_size_str(ts_size).rjust(6),
-                                               format_byte_size_str(total_dl_bytes).rjust(7)))
-                  progress.display()
-                video_file.write(chunk)
 
-      else:  # direct stream download
-        logging.getLogger().info("Downloading video to '%s'..." % (video_filepath))
-        if show_progressbar:
-          progress = progress_display.ProgressBar()
-        with open(video_tmp_filepath, "wb") as video_file, \
-                contextlib.closing(self.getHttpSession().get(self.stream_url,
-                                                             stream=True,
-                                                             headers={"User-Agent":
-                                                                      USER_AGENT},
-                                                             timeout=HTTP_TIMEOUT)) as response:
+    # sanitize output filename
+    video_filepath_ts = os.path.join(dir,
+                                  "%s.ts" % (self.title.replace("/", "-").strip(string.whitespace + ".")))
+    video_filepath_mp4 = "%s.mp4" % (os.path.splitext(video_filepath_ts)[0])
+    video_filepath_tmp = "%s.tmp" % (video_filepath_ts)
+
+    if os.path.isfile(video_filepath_ts) or os.path.isfile(video_filepath_mp4):
+      logging.getLogger().info("File already exists, skipping download")
+      return
+
+    # download
+    if sys.stdout.isatty() and logging.getLogger().isEnabledFor(logging.INFO):
+      progress = progress_display.ProgressBar()
+    else:
+      progress = None
+    if self.stream_url.endswith(".m3u8"):
+      # fetch m3u8 playlist
+      m3u8_data = self.fetchText(self.stream_url)
+      # parse it
+      ts_urls = tuple(filter(lambda x: not x.startswith("#"),
+                             m3u8_data.splitlines()))
+      # download ts files
+      self.download_ts(ts_urls, video_filepath_tmp, progress)
+
+    else:
+      # direct stream download
+      logging.getLogger().info("Downloading video to '%s'..." % (video_filepath_ts))
+      self.download_ts((self.stream_url,), video_filepath_tmp, progress)
+
+    if progress is not None:
+      progress.updateProgress(100)
+      progress.display()
+      progress.end()
+
+    # try to remux to mp4
+    remuxed = self.remuxToMp4(video_filepath_tmp, video_filepath_mp4)
+    if not remuxed:
+      shutil.move(video_filepath_tmp, video_filepath_ts)
+
+  def download_ts(self, urls, filepath, progress):
+    """ Download one or several MPEG-TS videos to a file. """
+    logging.getLogger().info("Downloading TS file%s..." % ("s" if len(urls) > 1 else ""))
+    with open(filepath, "wb") as video_file:
+      for i, ts_url in enumerate(urls):
+        previous_size = video_file.tell()
+        with contextlib.closing(self.getHttpSession().get(ts_url,
+                                                          stream=True,
+                                                          headers={"User-Agent":
+                                                                   USER_AGENT},
+                                                          timeout=HTTP_TIMEOUT)) as response:
           response.raise_for_status()
-          total_size = int(response.headers["Content-Length"])
+          ts_size = int(response.headers["Content-Length"])
           for chunk in response.iter_content(2 ** 12):
-            if show_progressbar:
-              downloaded_bytes = video_file.tell()
-              progress.updateProgress(downloaded_bytes * 100 / total_size)
-              progress.setAdditionnalInfo("%s / %s" %
-                                          (format_byte_size_str(downloaded_bytes).rjust(7),
-                                           format_byte_size_str(total_size)))
+            if progress is not None:
+              total_dl_bytes = video_file.tell()
+              ts_dl_bytes = total_dl_bytes - previous_size
+              progress.updateProgress((i * 100 / len(urls)) +
+                                      ts_dl_bytes * (100 / len(urls)) / ts_size)
+              progress.setAdditionnalInfo("TS file %s/%u: %s / %s, total %s" %
+                                          (str(i + 1).rjust(len(str(len(urls)))),
+                                           len(urls),
+                                           format_byte_size_str(ts_dl_bytes).rjust(6),
+                                           format_byte_size_str(ts_size).rjust(6),
+                                           format_byte_size_str(total_dl_bytes).rjust(7)))
               progress.display()
             video_file.write(chunk)
 
-      if show_progressbar:
-        progress.updateProgress(100)
-        progress.display()
-        progress.end()
-
-      ffmpeg_path = shutil.which("ffmpeg")
-      avconv_path = shutil.which("avconv")
-      remuxed = False
-      if ffmpeg_path is not None or avconv_path is not None:
-        # remux to mp4 (better seeking than mpegts)
-        # FIXME extension change breaks auto download
-        converter = os.path.basename(next(filter(None, (ffmpeg_path, avconv_path))))
-        video_filepath_mp4 = "%s.mp4" % (os.path.splitext(video_filepath)[0])
-        logging.getLogger().info("Remuxing to '%s' with %s..." % (video_filepath_mp4, converter))
-        for attempt in range(2):
-          cmd = [converter]
-          if not logger.isEnabledFor(logging.DEBUG):
-            cmd.extend(("-loglevel", "quiet"))
-          cmd.extend(("-i", video_tmp_filepath, "-c", "copy"))
-          if attempt == 1:
-            cmd.extend(("-bsf:a", "aac_adtstoasc"))
-          cmd.append(video_filepath_mp4)
+  def remuxToMp4(self, ts_filepath, mp4_filepath):
+    """ Remux TS file to MP4, return True if success, false instead. """
+    ffmpeg_path = shutil.which("ffmpeg")
+    avconv_path = shutil.which("avconv")
+    remuxed = False
+    if ffmpeg_path is not None or avconv_path is not None:
+      # remux to mp4 (better seeking than mpegts)
+      converter = os.path.basename(next(filter(None, (ffmpeg_path, avconv_path))))
+      logging.getLogger().info("Remuxing to '%s' with %s..." % (mp4_filepath, converter))
+      for attempt in range(2):
+        cmd = [converter]
+        if not logging.getLogger().isEnabledFor(logging.DEBUG):
+          cmd.extend(("-loglevel", "quiet"))
+        cmd.extend(("-i", ts_filepath, "-c", "copy"))
+        if attempt == 1:
+          cmd.extend(("-bsf:a", "aac_adtstoasc"))
+        cmd.append(mp4_filepath)
+        try:
+          subprocess.check_call(cmd)
+        except subprocess.CalledProcessError:
           try:
-            subprocess.check_call(cmd)
-          except subprocess.CalledProcessError:
-            try:
-              os.remove(video_filepath_mp4)
-            except FileNotFoundError:
-              pass
-            continue
-          remuxed = True
-          os.remove(video_tmp_filepath)
-          break
-        if not remuxed:
-          logging.getLogger().warning("Remuxing failed")
-
+            os.remove(mp4_filepath)
+          except FileNotFoundError:
+            pass
+          continue
+        remuxed = True
+        os.remove(ts_filepath)
+        break
       if not remuxed:
-        shutil.move(video_tmp_filepath, video_filepath)
-
-    else:
-      logger.info("File '%s' already exists, skipping download" % (video_filepath))
+        logging.getLogger().warning("Remuxing failed")
+    return remuxed
 
   def view(self, player):
     """ View a video in a given media player. """
