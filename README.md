@@ -41,6 +41,10 @@ Canal+ est un script Python permettant de parcourir/visionner/télécharger les 
 
 Exécuter `canalplus -h` pour obtenir une liste complète des options disponibles.
 
+Les vidéos téléchargées sont le plus souvent au format [MPEG-TS](https://fr.wikipedia.org/wiki/MPEG_Transport_Stream), lisible par [MPV](https://mpv.io/) ou [VLC](https://www.videolan.org/vlc/).
+
+Si FFMpeg ou LibAV est detecté sur le système, les vidéos sont automatiquement "remuxées" au format [MP4](https://fr.wikipedia.org/wiki/MPEG-4_Part_14), plus couramment supporté.
+
 ### Exemples
 
 * Lister toutes les vidéos des Guignols, et visionner la sélection avec VLC :
