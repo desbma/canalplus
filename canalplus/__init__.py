@@ -32,7 +32,7 @@ HTTP_TIMEOUT = 9.1
 
 def format_byte_size_str(size):
   if size > 1000000000:
-    return "%0.2fGB" % (size / 1000000000)
+    return "%0.3fGB" % (size / 1000000000)
   elif size > 1000000:
     return "%0.2fMB" % (size / 1000000)
   elif size > 1000:
