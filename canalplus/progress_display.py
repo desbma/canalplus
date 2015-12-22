@@ -27,7 +27,7 @@ class Progress(metaclass=abc.ABCMeta):
   def display(self):
     """ Display the progress if needed. """
     # short circuit if displaying too fast
-    now = time.time()
+    now = time.monotonic()
     if ((self._current_progress != 100) and
             (self._max_updates_per_sec > 0) and
             ((now - self._last_update_time) <= (1 / self._max_updates_per_sec))):
