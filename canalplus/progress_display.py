@@ -50,13 +50,33 @@ class ProgressBar(Progress):
 
   """ Terminal progress bar. """
 
-  def __init__(self, *, max_updates_per_sec=10):
+  def __init__(self, *, max_updates_per_sec=10, append_eta=False):
     super().__init__(max_updates_per_sec=max_updates_per_sec)
     self._line_with = shutil.get_terminal_size(fallback=(80, 0))[0] - 1
+    self._append_eta = append_eta
+    self._start_time = None
+
+  def updateProgress(self, progress):
+    if self._append_eta and (self._start_time is None):
+      self._start_time = time.monotonic()
+    super().updateProgress(progress)
 
   def _display(self):
     """ See Progress._display. """
     bar_width = self._line_with - 8
+    if self._append_eta:
+      now = time.monotonic()
+      eta_s = (100 - self._current_progress) * (now - self._start_time) / max(0.01, self._current_progress)
+      if eta_s > (60 * 99):
+        h = eta_s // (60 * 60)
+        m = (eta_s - h * 60 * 60) // 60
+        s = eta_s % 60
+        eta_str = "ETA %02u:%02u:%02u" % (h, m, s)
+      else:
+        m = eta_s // 60
+        s = eta_s % 60
+        eta_str = "ETA %02u:%02u" % (m, s)
+      bar_width -= len(eta_str) + 1
     if self._additionnal_info is not None:
       bar_width -= 1 + len(self._additionnal_info)
       additionnal_info = "%s " % (self._additionnal_info)
@@ -70,6 +90,8 @@ class ProgressBar(Progress):
     else:
       bar_str = ("%s>" % ("=" * (char_progress - 1))).ljust(bar_width)
     line = "\r%s[%3u%%] [%s]" % (additionnal_info, self._current_progress, bar_str)
+    if self._append_eta:
+      line = " ".join((line, eta_str))
     print(line, end="")
 
   def end(self):

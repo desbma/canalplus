@@ -95,7 +95,7 @@ class CanalPlusVideo(CanalPlusApiObject):
       with mkstemp_ctx.mkstemp(suffix=".ts") as video_filepath_tmp:
         # download
         if sys.stdout.isatty() and logging.getLogger().isEnabledFor(logging.INFO):
-          progress = progress_display.ProgressBar()
+          progress = progress_display.ProgressBar(append_eta=True)
         else:
           progress = None
         if self.stream_url.endswith(".m3u8"):
