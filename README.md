@@ -45,6 +45,8 @@ Les vidéos téléchargées sont le plus souvent au format [MPEG-TS](https://fr.
 
 Si FFMpeg ou LibAV est detecté sur le système, les vidéos sont automatiquement "remuxées" au format [MP4](https://fr.wikipedia.org/wiki/MPEG-4_Part_14), plus couramment supporté.
 
+Sous Windows, si vous rencontrez une erreur `UnicodeEncodeError`, pour certaines recherches uniquement, celà est du à un à un problème d'affichage des caractères à la console. [Pour régler ce problème, il suffit de définir la variable d'environnement `PYTHONIOENCODING` à `:ignore`](https://github.com/desbma/canalplus/issues/4#issuecomment-168416816).
+
 ### Exemples
 
 * Lister toutes les vidéos des Guignols, et visionner la sélection avec VLC :
