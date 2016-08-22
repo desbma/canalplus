@@ -27,7 +27,8 @@ from canalplus import progress_display
 
 
 USER_AGENT = "Mozilla/5.0"
-HTTP_TIMEOUT = 9.1
+IS_TRAVIS = os.getenv("CI") and os.getenv("TRAVIS")
+HTTP_TIMEOUT = 30.1 if IS_TRAVIS else 9.1
 
 
 def format_byte_size_str(size):
