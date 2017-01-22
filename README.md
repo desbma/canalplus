@@ -7,6 +7,8 @@ Canal+
 [![Version de Python supportées](https://img.shields.io/pypi/pyversions/canalplus.svg?style=flat)](https://pypi.python.org/pypi/canalplus/)
 [![Licence](https://img.shields.io/github/license/desbma/canalplus.svg?style=flat)](https://pypi.python.org/pypi/canalplus/)
 
+[ **Ce programme n'est plus maintenu.** ]
+
 Canal+ est un script Python permettant de parcourir/visionner/télécharger les vidéos mises en ligne par la chaine Canal+ (Guignols de l'info, Groland, etc.).
 
 
